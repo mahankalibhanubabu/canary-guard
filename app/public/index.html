@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CanaryGuard - Progressive Delivery Dashboard</title>
+  <meta name="description" content="CanaryGuard live telemetry and canary release testing dashboard with controlled failure rate simulation." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-container">
+    <!-- Navigation Header -->
+    <header class="navbar">
+      <div class="brand">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <div>
+          <h1>CanaryGuard</h1>
+          <span class="tagline">Progressive Delivery & Canary Observability</span>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <a href="/metrics" target="_blank" class="nav-link" id="nav-metrics">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          Prometheus Metrics
+        </a>
+        <a href="/healthz" target="_blank" class="nav-link" id="nav-health">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          /healthz
+        </a>
+        <div class="status-indicator online">
+          <span class="dot"></span>
+          <span class="status-text">LIVE</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="dashboard-grid">
+      <!-- Node & Deployment State Card -->
+      <section class="card deployment-card">
+        <div class="card-header">
+          <h2>Deployment Instance Details</h2>
+          <span class="pulse-badge">Scraped via /api/info</span>
+        </div>
+        <div class="instance-specs">
+          <div class="spec-item version-spec">
+            <span class="spec-label">Active Version (APP_VERSION)</span>
+            <div class="version-badge-container">
+              <span id="app-version-badge" class="version-badge version-v1">Loading...</span>
+            </div>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">Failure Injection (FAILURE_RATE)</span>
+            <div class="rate-indicator-wrapper">
+              <span id="failure-rate-val" class="spec-value highlight">0%</span>
+              <div class="meter-bar">
+                <div id="failure-meter-fill" class="meter-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">Host / Pod Name</span>
+            <span id="pod-hostname" class="spec-value mono">--</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">Server Uptime</span>
+            <span id="server-uptime" class="spec-value">0s</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Traffic Simulator & Canary Controls -->
+      <section class="card controls-card">
+        <div class="card-header">
+          <h2>Traffic & Canary Load Generator</h2>
+          <span class="subtext">Simulates user requests to <code>/api/orders</code></span>
+        </div>
+        <div class="controls-body">
+          <div class="button-group">
+            <button id="btn-send-order" class="btn btn-primary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              Send Order Request
+            </button>
+            <button id="btn-toggle-auto" class="btn btn-secondary">
+              <svg id="icon-auto-play" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span id="text-auto-btn">Start Auto Traffic</span>
+            </button>
+            <button id="btn-reset-stats" class="btn btn-ghost" title="Reset Local Stats">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              Reset
+            </button>
+          </div>
+
+          <div class="auto-rate-selector">
+            <label for="traffic-rate-slider">Traffic Intensity: <strong id="rate-display">2 req/s</strong></label>
+            <input type="range" id="traffic-rate-slider" min="1" max="10" value="2" step="1" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Telemetry Stats Cards -->
+      <section class="stats-row">
+        <div class="stat-card">
+          <span class="stat-title">Total Requests</span>
+          <div class="stat-number" id="stat-total-requests">0</div>
+          <span class="stat-footnote">Client sessions aggregated</span>
+        </div>
+        <div class="stat-card success-card">
+          <span class="stat-title">Successful (200 / 201)</span>
+          <div class="stat-number" id="stat-success-count">0</div>
+          <span class="stat-footnote text-success">Healthy processing</span>
+        </div>
+        <div class="stat-card danger-card">
+          <span class="stat-title">Failures (500)</span>
+          <div class="stat-number" id="stat-failure-count">0</div>
+          <span class="stat-footnote text-danger">Canary threshold triggers</span>
+        </div>
+        <div class="stat-card rate-card">
+          <span class="stat-title">Client Success Rate</span>
+          <div class="stat-number" id="stat-success-rate">100.0%</div>
+          <div class="health-progress-bar">
+            <div id="health-bar-fill" class="health-fill" style="width: 100%;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Live Event Stream & Response Inspector -->
+      <section class="card logs-card">
+        <div class="card-header">
+          <h2>Live Request Stream & Rollout Telemetry</h2>
+          <div class="stream-status">
+            <span class="stream-dot"></span>
+            <span>Streaming</span>
+          </div>
+        </div>
+        <div class="table-container">
+          <table class="logs-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Method & Endpoint</th>
+                <th>Status</th>
+                <th>Response Version</th>
+                <th>Latency</th>
+                <th>Payload / Error Detail</th>
+              </tr>
+            </thead>
+            <tbody id="logs-tbody">
+              <tr class="empty-row">
+                <td colspan="6">No requests sent yet. Click "Send Order Request" or start auto-traffic above.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>CanaryGuard Progressive Delivery Demo &bull; Built with Express & Prometheus Telemetry</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

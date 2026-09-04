@@ -1,0 +1,15 @@
+{
+  "name": "canaryguard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CanaryGuard progressive delivery demo application",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --check server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "prom-client": "^15.1.3"
+  }
+}

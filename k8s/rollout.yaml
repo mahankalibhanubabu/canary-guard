@@ -1,0 +1,104 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+
+metadata:
+  name: canaryguard
+  namespace: canaryguard
+
+spec:
+
+  replicas: 4
+
+  revisionHistoryLimit: 3
+
+  selector:
+    matchLabels:
+      app: canaryguard
+
+  template:
+
+    metadata:
+      labels:
+        app: canaryguard
+
+    spec:
+
+      containers:
+
+        - name: canaryguard
+
+          image: canaryguard:v1
+
+          imagePullPolicy: IfNotPresent
+
+          ports:
+
+            - containerPort: 3000
+              name: http
+
+          env:
+
+            - name: APP_VERSION
+              value: "v1"
+
+            - name: FAILURE_RATE
+              value: "0.10"
+
+          readinessProbe:
+
+            httpGet:
+              path: /api/health
+              port: 3000
+
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+          livenessProbe:
+
+            httpGet:
+              path: /api/health
+              port: 3000
+
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+          resources:
+
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+
+  strategy:
+    canary:
+      canaryService: canaryguard-canary
+      stableService: canaryguard-stable
+
+      trafficRouting:
+        nginx:
+          stableIngress: canaryguard  
+
+      steps:
+        - setWeight: 10
+
+        - pause:
+            duration: 30s
+
+        - analysis:
+            templates:
+              - templateName: canary-error-rate
+
+        - setWeight: 25
+
+        - pause:
+            duration: 30s
+
+        - setWeight: 50
+
+        - pause:
+            duration: 30s
+
+        - setWeight: 100

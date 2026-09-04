@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: canary-error-rate
+  namespace: canaryguard
+
+spec:
+  metrics:
+    - name: http-error-rate
+      interval: 1m
+      count: 5
+
+      # Pass if the error rate is below 5%.
+      successCondition: result[0] < 0.05
+
+      # Fail after 2 failed measurements.
+      failureLimit: 2
+
+      provider:
+        prometheus:
+          address: http://prometheus-operated.monitoring.svc.cluster.local:9090
+
+          query: |
+            (
+              sum(rate(http_requests_total{status_code=~"5.."}[5m]))
+              or vector(0)
+            )
+            /
+            clamp_min(sum(rate(http_requests_total[5m])), 1)
