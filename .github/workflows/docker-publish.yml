@@ -34,3 +34,18 @@ jobs:
       - name: Run tests
         working-directory: ./app
         run: npm test
+
+  docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t canaryguard:${{ github.sha }} \
+            .
