@@ -3,13 +3,14 @@ kind: Application
 metadata:
   name: canaryguard
   namespace: argocd
+
 spec:
   project: default
 
   source:
     repoURL: https://github.com/mahankalibhanubabu/canary-guard.git
     targetRevision: main
-    path: k8s
+    path: k8s/overlays/dev
 
   destination:
     server: https://kubernetes.default.svc
@@ -19,5 +20,6 @@ spec:
     automated:
       prune: true
       selfHeal: true
+
     syncOptions:
       - CreateNamespace=true
