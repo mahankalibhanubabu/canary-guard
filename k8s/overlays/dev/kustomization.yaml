@@ -6,4 +6,4 @@ resources:
 
 images:
   - name: ghcr.io/mahankalibhanubabu/canary-guard
-    newTag: latest
+    newTag: sha-7b47c03
