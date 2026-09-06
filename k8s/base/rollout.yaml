@@ -39,7 +39,7 @@ spec:
           env:
 
             - name: APP_VERSION
-              value: "v1"
+              value: "v2-bad"
 
             - name: FAILURE_RATE
               value: "0.90"
