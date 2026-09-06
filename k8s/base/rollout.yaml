@@ -42,7 +42,7 @@ spec:
               value: "v1"
 
             - name: FAILURE_RATE
-              value: "0.10"
+              value: "0.90"
 
           readinessProbe:
 
